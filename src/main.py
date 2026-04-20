@@ -1,6 +1,17 @@
 from fastapi import FastAPI
+from src.api.routes import router
+from src.services.consumer import consume_events
+import asyncio
 
 app = FastAPI()
+
+app.include_router(router)
+
+
+@app.on_event("startup")
+async def startup_event():
+    asyncio.create_task(consume_events())
+
 
 @app.get("/")
 def root():
