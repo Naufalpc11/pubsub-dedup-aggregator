@@ -3,12 +3,10 @@ from typing import List, Union
 from src.models.event import Event
 from src.services.queue import event_queue
 from src.storage.db import get_connection
-from src.services.stats import increment_received
-from src.services.stats import get_stats
+from src.services.stats import increment_received, get_stats
 import json
 
 router = APIRouter()
-
 
 @router.post("/publish")
 async def publish(events: Union[Event, List[Event]]):
