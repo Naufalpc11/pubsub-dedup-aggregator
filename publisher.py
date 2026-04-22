@@ -1,7 +1,7 @@
 import requests
 import time
 
-URL = "http://aggregator:8000/publish"
+URL = "http://aggregator:8080/publish"
 
 event = {
     "topic": "sensor",
