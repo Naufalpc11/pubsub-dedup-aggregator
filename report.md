@@ -7,7 +7,7 @@
 - Dosen: Riska Kurniyanto Abdullah, S.T., M.Kom.
 - Tanggal: 22 April 2026
 - Repository GitHub: [\[pubsub-dedup-aggregator\]](https://github.com/Naufalpc11/pubsub-dedup-aggregator)
-- Link Video Demo: [Tempel URL]
+- Link Video Demo: [UTS Sistem Terdistribusi - Demo Pub-Sub Dedup Aggregator (At-Least-Once, Idempotency, Persistensi)](https://youtu.be/tvs8Ss4XCXo)
 
 ## 1. Bagian Teori
 
@@ -90,14 +90,26 @@ Tujuan utama sistem adalah menerima event/log dari publisher, memproses event se
 Sistem terdiri dari lima komponen inti. Pertama, API layer menerima event melalui endpoint publish. Kedua, queue internal menampung event secara non-blocking. Ketiga, consumer membaca queue dan mengeksekusi logika idempotency. Keempat, dedup store berbasis SQLite menyimpan jejak event yang sudah pernah diproses. Kelima, stats service menyediakan observability untuk received, unique_processed, duplicate_dropped, daftar topics, dan uptime.
 
 ### 2.3 Diagram Arsitektur
-![Gambar 1. Diagram arsitektur sistem](images/2.3-arsitektur.svg)
 
-Gambar 1 menunjukkan arsitektur layanan Pub-Sub aggregator: publisher mengirim event ke API, API memasukkan event ke antrean internal, consumer memproses event secara idempotent dengan dedup store SQLite, dan endpoint observability menyediakan data event unik serta statistik sistem.
+![Gambar 1. Diagram arsitektur sistem](docs/image/arsitektur-sistem.png)
+
+Keterangan gambar:
+- Publisher mengirim event ke endpoint publish.
+- API melakukan validasi skema, lalu enqueue event.
+- Consumer memeriksa dedup store memakai (topic, event_id).
+- Event unik disimpan ke processed_events, event duplikat dijatuhkan.
+- Stats endpoint menyajikan metrik operasional.
 
 ### 2.4 Alur Event End-to-End
-![Gambar 2. Sequence publish sampai consume](images/2.4-event-flow.svg)
 
-Gambar 2 menunjukkan alur end-to-end pemrosesan event. Request `POST /publish` divalidasi lalu di-queue, consumer melakukan dedup check `(topic,event_id)`, kemudian mengeksekusi cabang pemrosesan event unik atau pembuangan event duplikat, disertai pembaruan statistik.
+![Gambar 2. Sequence publish sampai consume](docs\diagram\sequence-diagram.png)
+
+Keterangan gambar:
+- Publish request diterima.
+- Event masuk antrean.
+- Consumer ambil event, cek duplicate.
+- Jika unik: persist + update unique_processed.
+- Jika duplikat: update duplicate_dropped.
 
 ---
 
@@ -199,11 +211,11 @@ Format event minimal:
 ### 4.4 Containerisasi
 Dockerfile menggunakan base image Python slim, menjalankan aplikasi sebagai non-root user, dan mengekspos port 8080. Docker Compose memisahkan service aggregator dan publisher dalam satu network internal.
 
-![Docker Desktop running](image/docker-running.png)
+![Docker Desktop running](docs/image/docker-running.png)
 
 *Gambar 4. Docker Desktop dalam kondisi aktif*
 
-![Docker Compose Up](image/docker-compose-up.png)
+![Docker Compose Up](docs/image/docker-compose%20up-build.png)
 
 *Gambar 5. Docker Compose Up*
 
@@ -212,7 +224,7 @@ Dockerfile menggunakan base image Python slim, menjalankan aplikasi sebagai non-
 ## 5. Prosedur Pengujian
 
 Prosedur rinci tersedia pada:
-- [readme.md](/docs/readme.md)
+- [docs/readme.md](docs/readme.md)
 
 Ringkasan pengujian yang dilakukan:
 1. Uji endpoint root dan publish single.
@@ -223,11 +235,17 @@ Ringkasan pengujian yang dilakukan:
 6. Uji stats/events consistency.
 7. Jalankan unit test otomatis.
 
-![Gambar 6. Uji API dengan curl/Postman](docs/images/test-api.png)
+![Gambar 6.1 Uji API publish event](docs/image/send-one-topic.png)
 
-![Gambar 7. Hasil pytest semua lulus](docs/images/pytest-result.png)
+![Gambar 6.2 Uji deteksi duplikasi event](docs/image/duplicate-detected-after-dedup.png)
+
+Gambar 6. Pengujian endpoint API menggunakan `irm` (publish event awal dan event duplikat).
 
 ---
+
+![Gambar 7. Hasil pytest semua lulus](docs/image/pytest.png)
+
+Gambar 7. Hasil pytest semua lulus
 
 ## 6. Hasil dan Analisis Performa
 
@@ -281,39 +299,10 @@ Implementasi pub-sub log aggregator berhasil memenuhi kebutuhan inti tugas: mene
 
 ---
 
-## 10. Kepatuhan terhadap Ketentuan UTS
 
-Daftar berikut merangkum kesesuaian laporan terhadap ketentuan yang diberikan pada awal instruksi.
+## Daftar Pustaka
 
-- Ringkasan sistem dan arsitektur disediakan pada Bagian 1, termasuk slot diagram.
-- Keputusan desain idempotency, dedup store, ordering, dan retry dibahas pada Bagian 3.
-- Analisis performa dan metrik disajikan pada Bagian 6.
-- Keterkaitan implementasi dengan Bab 1-7 disajikan pada Bagian 7.
-- Sitasi menggunakan gaya APA 7 dan disertakan pada Daftar Pustaka.
-- Placeholder gambar dan bukti uji disediakan agar siap diekspor ke PDF.
-
----
-
-## Daftar Pustaka (APA 7)
-
-Dosen Pengampu. (2026). Materi kuliah sistem terdistribusi dan paralel: Pertemuan 1 (Pengantar sistem terdistribusi) [Slide kuliah]. LMS [Nama Kampus].
-
-Dosen Pengampu. (2026). Materi kuliah sistem terdistribusi dan paralel: Pertemuan 2 (Arsitektur client-server dan publish-subscribe) [Slide kuliah]. LMS [Nama Kampus].
-
-Dosen Pengampu. (2026). Materi kuliah sistem terdistribusi dan paralel: Pertemuan 3 (Delivery semantics dan idempotency) [Slide kuliah]. LMS [Nama Kampus].
-
-Dosen Pengampu. (2026). Materi kuliah sistem terdistribusi dan paralel: Pertemuan 4 (Penamaan topic dan event identity) [Slide kuliah]. LMS [Nama Kampus].
-
-Dosen Pengampu. (2026). Materi kuliah sistem terdistribusi dan paralel: Pertemuan 5 (Ordering, clocks, dan logical time) [Slide kuliah]. LMS [Nama Kampus].
-
-Dosen Pengampu. (2026). Materi kuliah sistem terdistribusi dan paralel: Pertemuan 6 (Failure modes dan mitigasi) [Slide kuliah]. LMS [Nama Kampus].
-
-Dosen Pengampu. (2026). Materi kuliah sistem terdistribusi dan paralel: Pertemuan 7 (Consistency dan edge computing) [Slide kuliah]. LMS [Nama Kampus].
-
-Dosen Pengampu. (2026). Materi kuliah sistem terdistribusi dan paralel: Pertemuan 8 (Metrik evaluasi sistem) [Slide kuliah]. LMS [Nama Kampus].
-
-Catatan:
-- Ganti "Dosen Pengampu" dan "LMS [Nama Kampus]" dengan metadata nyata dari kelas kamu.
+Tanenbaum, A. S., & Van Steen, M. (2007). Distributed systems: Principles and paradigms (2nd ed.). Prentice Hall.
 
 ---
 
