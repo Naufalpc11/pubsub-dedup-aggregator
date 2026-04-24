@@ -24,7 +24,7 @@ cd "D:\Semester 6\Sister\UTS\pubsub-dedup-aggregator"
 
 ### Bukti Gambar
 
-![Struktur folder proyek](image/struktur-folder.png)
+![Struktur folder proyek](docs/image/struktur-folder.png)
 
 ## 2. Build Image Aggregator
 
@@ -40,7 +40,7 @@ Ekspektasi:
 
 ### Bukti Gambar
 
-![Build image docker](image/(build-image)-docker-build--uts-aggregator.png)
+![Build image docker](docs/image/%28build%20image%29-docker%20build-uts-aggregator.png)
 
 ## 3. Jalankan Service Aggregator (Single Container)
 
@@ -57,9 +57,9 @@ Ekspektasi:
 
 ### Bukti Gambar
 
-![Run container aggregator](image/run-container.png)
+![Run container aggregator](docs/image/run-container.png)
 
-![Docker running](image/docker-running.png)
+![Docker running](docs/image/docker-running.png)
 
 ## 4. Uji Endpoint Dasar
 
@@ -80,7 +80,7 @@ Ekspektasi:
 
 ### Bukti Gambar
 
-![Health check root](image/check-health-aggregator.png)
+![Health check root](docs/image/check-health-aggregator.png)
 
 ### 4.2 Publish Single Event
 
@@ -102,7 +102,7 @@ Ekspektasi:
 
 ### Bukti Gambar
 
-![Kirim satu event](image/send-one-topic.png)
+![Kirim satu event](docs/image/send-one-topic.png)
 
 ### 4.3 Publish Duplicate Event (Idempotency Test)
 
@@ -126,7 +126,7 @@ Ekspektasi:
 
 ### Bukti Gambar
 
-![Duplicate terdeteksi](./image/duplicate-detected-after-dedup.png)
+![Duplicate terdeteksi](docs/image/duplicate-detected-after-dedup.png)
 
 ### 4.4 Cek Event Tersimpan
 
@@ -139,7 +139,7 @@ Ekspektasi:
 
 ### Bukti Gambar
 
-![Hasil query events topic sensor](image/irm-topic-sensor.png)
+![Hasil query events topic sensor](docs/image/irm-topic-sensor.png)
 
 ### 4.5 Cek Statistik
 
@@ -157,7 +157,7 @@ Ekspektasi:
 
 ### Bukti Gambar
 
-![Hasil endpoint stats](image/irm-stats.png)
+![Hasil endpoint stats](docs/image/irm-stats.png)
 
 ## 5. Uji Validasi Skema (Schema Validation)
 
@@ -183,7 +183,7 @@ Ekspektasi:
 
 ### Bukti Gambar
 
-![Error 422 untuk skema invalid](image/error-422.png)
+![Error 422 untuk skema invalid](docs/image/error-422.png)
 
 ## 6. Uji Batch Event
 
@@ -246,7 +246,7 @@ Ekspektasi:
 
 ### Bukti Gambar
 
-![Docker compose up build](./image/(build%20image)-docker%20build-uts-aggregator.png)
+![Docker compose up build](docs/image/%28build%20image%29-docker%20build-uts-aggregator.png)
 
 Hentikan compose:
 
@@ -288,7 +288,7 @@ Ekspektasi:
 - Seluruh test lulus.
 - Cakupan mencakup dedup, persistence, schema, stats/events consistency, dan mini-stress.
 
-![Docker compose up build](./image/pytest.png)
+![Hasil pytest semua lulus](docs/image/pytest.png)
 
 ## 10. Cleanup Setelah Pengujian
 
