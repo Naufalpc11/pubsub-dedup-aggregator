@@ -6,7 +6,7 @@
 - Mata Kuliah: Sistem Paralel dan Terdistribusi
 - Dosen: Riska Kurniyanto Abdullah, S.T., M.Kom.
 - Tanggal: 22 April 2026
-- Repository GitHub: [\[pubsub-dedup-aggregator\]](https://github.com/Naufalpc11/pubsub-dedup-aggregator)
+- Repository GitHub: [pubsub-dedup-aggregator](https://github.com/Naufalpc11/pubsub-dedup-aggregator)
 - Link Video Demo: [UTS Sistem Terdistribusi - Demo Pub-Sub Dedup Aggregator (At-Least-Once, Idempotency, Persistensi)](https://youtu.be/tvs8Ss4XCXo)
 
 ## 1. Bagian Teori
@@ -90,10 +90,71 @@ Tujuan utama sistem adalah menerima event/log dari publisher, memproses event se
 Sistem terdiri dari lima komponen inti. Pertama, API layer menerima event melalui endpoint publish. Kedua, queue internal menampung event secara non-blocking. Ketiga, consumer membaca queue dan mengeksekusi logika idempotency. Keempat, dedup store berbasis SQLite menyimpan jejak event yang sudah pernah diproses. Kelima, stats service menyediakan observability untuk received, unique_processed, duplicate_dropped, daftar topics, dan uptime.
 
 ### 2.3 Diagram Arsitektur
-
-![Gambar 1. Diagram arsitektur sistem](docs/image/arsitektur-sistem.png)
-
-Keterangan gambar:
+Ingestion & Processing Flow (Write)
+Alur ini menangani bagaimana event masuk dari Publisher hingga disimpan secara unik (idempotent) ke SQLite
+```text
+      ┌───────────────┐
+      │   Publisher   │
+      └───────┬───────┘
+              │
+              │ POST /publish(event)
+              ▼
+┌───────────────────────────────┐
+│        API Aggregator         │
+│           (FastAPI)           │
+├───────────────────────────────┤
+│ • Validasi Skema Event        │
+│ • Counter: Increment Received │
+└───────┬───────────────────────┘
+        │
+        │ enqueue
+        ▼
+┌───────────────────────────────┐
+│       In-memory Queue         │
+│       (asyncio.Queue)         │
+└───────┬───────────────────────┘
+        │
+        │ dequeue
+        ▼
+┌───────────────────────────────┐
+│     Consumer (Idempotent)     │
+├───────────────────────────────┤
+│ • Logic: Cek (topic, id)      │
+└───────┬───────────────────────┘
+        │
+        ▼
+┌───────────────────────────────┐
+│      SQLite Dedup Store       │
+├───────────────────────────────┤
+│ [Table: events_seen]          │
+│ [Table: processed_events]     │
+└───────────────────────────────┘
+```
+Query Flow (Read)
+Alur untuk pengambilan data dan statistik oleh Publisher/Client.
+```
+GET /events?topic                GET /stats
+          │                              │
+          ▼                              ▼
+┌──────────────────────────────────────────────────────────┐
+│                  API Aggregator (FastAPI)                │
+└────┬──────────────────────────┬─────────────────────┬────┘
+     │                          │                     │
+     │ ┌──────────────────┐     │     ┌─────────────┐ │
+     │ │  Query Service   │     │     │Stats Service│ │
+     │ └────────┬─────────┘     │     └──────┬──────┘ │
+     │          │               │            │        │
+     └──────────┼───────────────┴────────────┼────────┘
+                │                            │
+                ▼                            ▼
+     ┌──────────────────────────────────────────────┐
+     │             SQLite Storage Engine            │
+     ├──────────────────────────────────────────────┤
+     │ • SELECT FROM processed_events WHERE topic   │
+     │ • SELECT COUNT(DISTINCT topic)               │
+     └──────────────────────────────────────────────┘
+```
+Keterangan diagram ASCII:
 - Publisher mengirim event ke endpoint publish.
 - API melakukan validasi skema, lalu enqueue event.
 - Consumer memeriksa dedup store memakai (topic, event_id).
@@ -102,7 +163,7 @@ Keterangan gambar:
 
 ### 2.4 Alur Event End-to-End
 
-![Gambar 2. Sequence publish sampai consume](docs\diagram\sequence-diagram.png)
+![Gambar 2. Sequence publish sampai consume](docs/diagram/sequence-diagram.png)
 
 Keterangan gambar:
 - Publish request diterima.
