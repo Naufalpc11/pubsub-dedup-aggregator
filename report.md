@@ -320,7 +320,21 @@ Gambar 7. Hasil pytest semua lulus
 | Mini-stress | Sistem tetap responsif pada beban kecil dengan duplikasi | PASS |
 
 ### 6.2 Analisis Metrik
-Secara metodologis, metrik dihitung dari endpoint stats dan durasi eksekusi skenario. Throughput dihitung dari total event diproses dibagi waktu pengujian. Duplicate rate dihitung dari proporsi duplicate_dropped terhadap received. Latency diamati dari jeda publish hingga event tercermin pada endpoint events/stats. Nilai numerik final perlu diisi berdasarkan log eksekusi pada mesin pengujian karena sangat bergantung pada spesifikasi perangkat dan kondisi runtime container.
+Secara metodologis, metrik dihitung dari endpoint stats dan durasi eksekusi skenario. Throughput dihitung dari total event diproses dibagi waktu pengujian. Duplicate rate dihitung dari proporsi duplicate_dropped terhadap received. Latency diamati dari jeda publish hingga event tercermin pada endpoint events/stats.
+
+Tabel berikut disiapkan untuk pengisian nilai numerik final hasil uji di mesin pengujian.
+
+| Metrik | Rumus | Nilai | Sumber Data |
+|---|---|---|---|
+| Throughput (event/detik) | total_event_diproses / durasi_uji_detik | [isi nilai] | Log publish + durasi stopwatch |
+| Rata-rata Latency (ms) | total_latency_ms / jumlah_event | [isi nilai] | Selisih waktu publish ke terlihat di events/stats |
+| Duplicate Rate (%) | (duplicate_dropped / received) x 100% | [isi nilai] | Endpoint /stats |
+| Unique Processing Ratio (%) | (unique_processed / received) x 100% | [isi nilai] | Endpoint /stats |
+
+Catatan pengisian:
+- Jalankan skenario yang sama minimal 3 kali.
+- Isi nilai akhir menggunakan rata-rata agar lebih representatif.
+- Cantumkan kondisi uji (CPU/RAM, mode container, jumlah event) pada lampiran bila diperlukan.
 
 ### 6.3 Diskusi
 Hasil menunjukkan desain idempotent consumer efektif untuk at-least-once delivery. Trade-off yang terlihat adalah antrian asynchronous memberi respons API cepat, tetapi observasi hasil proses bersifat eventual, bukan instan. Ini sesuai dengan target sistem log aggregator yang lebih menekankan ketahanan ingest dan correctness dedup daripada ordering global ketat.
@@ -340,22 +354,7 @@ Hasil menunjukkan desain idempotent consumer efektif untuk at-least-once deliver
 | Bab 7 | Eventual consistency | State endpoint konvergen setelah antrean diproses |
 
 ---
-
-## 8. Kendala, Limitasi, dan Rencana Peningkatan
-
-### 8.1 Kendala dan Limitasi
-- Queue masih in-memory, belum durable queue eksternal.
-- Belum ada dead-letter queue untuk event gagal berulang.
-- Ordering global tidak dijamin.
-
-### 8.2 Rencana Peningkatan
-- Integrasi broker message eksternal (misalnya RabbitMQ/Kafka) untuk skala lebih besar.
-- Menambah retry policy dengan exponential backoff terstandar.
-- Menambahkan metrik histogram latency dan dashboard observability.
-
----
-
-## 9. Kesimpulan
+## 8. Kesimpulan
 Implementasi pub-sub log aggregator berhasil memenuhi kebutuhan inti tugas: menerima event, memproses asynchronous, mencegah reprocessing event duplikat, dan mempertahankan efektivitas dedup setelah restart. Pendekatan idempotent consumer dengan dedup store persisten terbukti menjadi strategi praktis untuk lingkungan at-least-once delivery. Secara akademis, solusi ini konsisten dengan prinsip dasar sistem terdistribusi: menerima bahwa kegagalan dan ketidakpastian jaringan adalah hal normal, lalu merancang mekanisme konvergen yang sederhana, terukur, dan dapat diuji.
 
 ---
@@ -364,20 +363,3 @@ Implementasi pub-sub log aggregator berhasil memenuhi kebutuhan inti tugas: mene
 ## Daftar Pustaka
 
 Tanenbaum, A. S., & Van Steen, M. (2007). Distributed systems: Principles and paradigms (2nd ed.). Prentice Hall.
-
----
-
-## Lampiran
-
-### Lampiran A. Daftar Gambar yang Perlu Ditempel
-1. Diagram arsitektur sistem.
-2. Sequence diagram publish-consume.
-3. Screenshot Docker Desktop running.
-4. Screenshot docker compose up.
-5. Screenshot uji API.
-6. Screenshot hasil pytest.
-
-### Lampiran B. Artefak Tambahan
-- Link repository.
-- Link video demo.
-- Potongan request/response endpoint utama.
